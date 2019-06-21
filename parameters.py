@@ -40,6 +40,7 @@ backend_experiment_db = redis.Redis(
     decode_responses=True,
 )
 
+
 def backend(db):
     backend = (
         backend_protocol
