@@ -54,9 +54,11 @@ def start(node_id):
                     container_long_id = container.attrs["Id"]
 
                     # Get container's service name
-                    container_service_name = container.attrs["Config"]["Labels"][
+                    config_labels = container.attrs["Config"]["Labels"]
+                    container_service_name = config_labels.get(
                         "com.docker.swarm.service.name"
-                    ]
+                    ) or config_labels.get("io.kubernetes.container.name")
+
                     container_state_running = container.attrs["State"]["Running"]
                     if container_state_running != True:
                         continue
@@ -80,16 +82,11 @@ def start(node_id):
                     container_obj = {
                         "id_long": container_long_id,
                         "name": container.attrs["Name"],
-                        "service_id": container.attrs["Config"]["Labels"][
-                            "com.docker.swarm.service.id"
-                        ],
                         "service_name": container_service_name,
-                        "task_id": container.attrs["Config"]["Labels"][
-                            "com.docker.swarm.task.id"
-                        ],
-                        "task_name": container.attrs["Config"]["Labels"][
-                            "com.docker.swarm.task.name"
-                        ],
+                        "task_id": config_labels.get("com.docker.swarm.task.id")
+                        or config_labels.get("io.kubernetes.pod.uid"),
+                        "task_name": config_labels.get("com.docker.swarm.task.name")
+                        or config_labels.get("io.kubernetes.pod.name"),
                         "hostname": container.attrs["Config"]["Hostname"],
                         "ip_address": "",
                         "created": container.attrs["Created"],
@@ -97,11 +94,13 @@ def start(node_id):
                         "experiment_id": experiment["experiment_id"],
                         "current_update": current_update,
                     }
+                    container_obj["ip_address"] = (
+                        container.attrs["NetworkSettings"]["Networks"]
+                        .get("bridge", {})
+                        .get("IPAddress")
+                    )
 
                     try:
-                        container_obj["ip_address"] = container.attrs[
-                            "NetworkSettings"
-                        ]["Networks"]["bridge"]["IPAddress"]
 
                         # Start a new thread to control this container
                         job_worker_thread = Thread(
@@ -129,6 +128,7 @@ def start(node_id):
 
         except Exception as e:
             time.sleep(2.5)
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
