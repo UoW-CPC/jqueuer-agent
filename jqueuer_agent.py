@@ -7,12 +7,23 @@ import subprocess
 import ast
 import os
 import signal
+import logging
 
 import docker
 import redis
 
 from parameters import backend_experiment_db
 import monitoring
+
+""" Configure logging """
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+conlog = logging.StreamHandler()
+conlog.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+conlog.setFormatter(formatter)
+logger.addHandler(conlog)
+logger.info("jQueuer started")
 
 job_workers = {}
 
@@ -37,8 +48,8 @@ def start(node_id):
     client = None
     try:
         client = docker.from_env()
-    except Exception as e:
-        raise e
+    except Exception:
+        logger("Could not connect to Docker at /var/run/docker.sock")
 
     # a counter to trace the dead containers
     current_update = 0
@@ -56,23 +67,23 @@ def start(node_id):
                 container_long_id = container.id
 
                 # Get container's service name
-                container_service_name = container.labels.get(
-                    "com.docker.swarm.service.name"
-                ) or container.labels.get("io.kubernetes.container.name") or container.name
+                container_service_name = (
+                    container.labels.get("com.docker.swarm.service.name")
+                    or container.labels.get("io.kubernetes.container.name")
+                    or container.name
+                )
 
                 # Check if the service belongs to an experiment
                 if not backend_experiment_db.exists(container_service_name):
                     continue
 
                 # Get the experiment id
-                [experiment_id] = (
-                    backend_experiment_db.hmget(container_service_name, 'experiment_id')
+                [experiment_id] = backend_experiment_db.hmget(
+                    container_service_name, "experiment_id"
                 )
                 # Check if the container has been already added, if yes, update the current_update
                 if container_long_id in container_list:
-                    container_list[container_long_id][
-                        "current_update"
-                    ] = current_update
+                    container_list[container_long_id]["current_update"] = current_update
                     continue
 
                 container_obj = {
@@ -105,9 +116,19 @@ def start(node_id):
                     container_list[container_long_id] = container_obj
 
                 except Exception as e:
-                    pass
+                    logger.error(
+                        "Error starting thread for {}/{}".format(
+                            container_service_name, experiment_id
+                        )
+                    )
+                    logger.debug(e)
             except Exception as e:
-                pass
+                logger.error(
+                    "Error getting container info for {}/{}".format(
+                        container_service_name, experiment_id
+                    )
+                )
+                logger.debug(e)
         try:
             # Containers that should be deleted from the list because they aren't alive
             trash = []
@@ -121,9 +142,10 @@ def start(node_id):
             for x in trash:
                 del container_list[x]
         except Exception as e:
+            logger.debug("Error with garbage collection...")
             time.sleep(5)
-            
-        time.sleep(2.5)
+
+        time.sleep(5)
 
 
 if __name__ == "__main__":
