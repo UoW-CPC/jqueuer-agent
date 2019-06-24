@@ -117,7 +117,6 @@ def process_list(worker_id, exp_id, job_queue_id, job, job_start_time):
             ["docker", "exec", getContainerID(worker_id)]
             + task_command
             + task["data"]
-            + [str(worker_id)]
         )
         output = subprocess.check_output(command)
         monitoring.terminate_task(
@@ -131,6 +130,10 @@ def process_list(worker_id, exp_id, job_queue_id, job, job_start_time):
         )
 
     # A post-job script might be added here
+
+
+    if isinstance(output, bytes):
+        output = output.decode()
 
     return output
 
@@ -166,7 +169,7 @@ def process_array(worker_id, exp_id, job_queue_id, job, job_start_time):
         command = (
             ["docker", "exec", getContainerID(worker_id)]
             + tasks["command"]
-            + [str(tasks["data"]) + [str(worker_id)]]
+            + [str(tasks["data"])]
         )
         output = subprocess.check_output(command)
         monitoring.terminate_task(
