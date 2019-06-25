@@ -117,15 +117,15 @@ def start(node_id):
 
                 except Exception as e:
                     logger.error(
-                        "Error starting thread for {}/{}".format(
-                            container_service_name, experiment_id
+                        "Error starting thread for {}".format(
+                            container.name
                         )
                     )
                     logger.debug(e)
             except Exception as e:
                 logger.error(
-                    "Error getting container info for {}/{}".format(
-                        container_service_name, experiment_id
+                    "Error getting container info for {}".format(
+                        container.name
                     )
                 )
                 logger.debug(e)
