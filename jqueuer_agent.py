@@ -12,7 +12,7 @@ import logging
 import docker
 import redis
 
-from parameters import backend_experiment_db
+from parameters import backend_experiment_db, metrics_agent_port
 import monitoring
 
 """ Configure logging """
@@ -154,4 +154,7 @@ if __name__ == "__main__":
     else:
         node_id = "default_id_1"
     start(node_id)
+    # Start metrics agent thread
+    metrics_agent_thread = Thread(target = monitoring.start, args = (metrics_agent_port,))
+    metrics_agent_thread.start()
 

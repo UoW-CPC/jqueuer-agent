@@ -1,8 +1,8 @@
 import os
 
 import redis
-from datadog import initialize
-from datadog import statsd
+# from datadog import initialize
+# from datadog import statsd
 
 # Job Queue Prefix
 JOB_QUEUE_PREFIX = "jqueue_service_"
@@ -14,6 +14,8 @@ broker_password = os.getenv("RABBIT_PASS", "mypass")
 broker_server = os.getenv("RABBIT_SERVER", "jqueuer-rabbit")
 broker_port = os.getenv("RABBIT_PORT", 5672)
 
+# Metric port configuration
+metrics_agent_port = os.getenv("METRIC_PORT", 9081)
 
 def broker():
     broker = broker_protocol + "://" + broker_username
@@ -57,12 +59,12 @@ def backend(db):
 
 
 # Prometheus exporer configuration
-STATSD_SERVER = os.getenv("STATSD_SERVER", "jqueuer-statsd")
-STATSD_PORT = os.getenv("STATSD_PORT", 9125)
-STATSD_OPTIONS = {
-    "api_key": "jqueuer_api_key",
-    "app_key": "jqueuer_app_key",
-    "statsd_host": STATSD_SERVER,
-    "statsd_port": STATSD_PORT,
-}
-initialize(**STATSD_OPTIONS)
+# STATSD_SERVER = os.getenv("STATSD_SERVER", "jqueuer-statsd")
+# STATSD_PORT = os.getenv("STATSD_PORT", 9125)
+# STATSD_OPTIONS = {
+#     "api_key": "jqueuer_api_key",
+#     "app_key": "jqueuer_app_key",
+#     "statsd_host": STATSD_SERVER,
+#     "statsd_port": STATSD_PORT,
+# }
+# initialize(**STATSD_OPTIONS)
