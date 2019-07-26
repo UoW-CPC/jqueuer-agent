@@ -153,8 +153,10 @@ if __name__ == "__main__":
         node_id = sys.argv[1]
     else:
         node_id = "default_id_1"
-    start(node_id)
     # Start metrics agent thread
     metrics_agent_thread = Thread(target = monitoring.start, args = (metrics_agent_port,))
     metrics_agent_thread.start()
+    # start jqueuer agent process
+    start(node_id)
+
 
