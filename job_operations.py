@@ -13,6 +13,12 @@ import monitoring
 import container_worker as jqw
 from container_worker import job_app
 
+# temp code [au]
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+# --------------------------------
+
 # What to do when a job fails
 class JQueuer_Task(celery.Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
@@ -36,6 +42,10 @@ def add(self, exp_id, job_queue_id, job):
     output = ""
 
     worker_id = self.request.hostname.split("@")[1]
+
+    # temp code [au]
+    logger.info("In job_operations run_job")
+    # --------------------------------
 
     monitoring.run_job(
         getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"]

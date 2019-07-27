@@ -3,6 +3,12 @@ import sys
 
 from prometheus_client import start_http_server, Gauge, Counter, Histogram
 
+# temp code [au]
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+# --------------------------------
+
 def start(metrics_agent_port):
     start_http_server(metrics_agent_port)
 
@@ -12,10 +18,16 @@ node_counter = Counter(JQUEUER_WORKER_COUNT, "JQueuer Worker", ["node_id", "serv
 
 
 def add_worker(node_id, service_name):
+    # temp code [au]
+    logger.info("In monitoring add_worker")
+    # --------------------------------
     node_counter.labels(node_id,service_name).inc()
 
 
 def terminate_worker(node_id, service_name):
+    # temp code [au]
+    logger.info("In monitoring terminate_worker")
+    # --------------------------------
     node_counter.labels(node_id,service_name).dec()
 
 
@@ -31,6 +43,9 @@ job_running = Gauge(JQUEUER_JOB_RUNNING,JQUEUER_JOB_RUNNING,["node_id","experime
 job_started = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
 def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
+    # temp code [au]
+    logger.info("In monitoring run_job")
+    # --------------------------------
     job_started_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
@@ -47,6 +62,9 @@ job_accomplished_duration = Gauge(JQUEUER_JOB_ACCOMPLISHED_DURATION,JQUEUER_JOB_
 job_accomplished = Gauge(JQUEUER_JOB_ACCOMPLISHED,JQUEUER_JOB_ACCOMPLISHED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
 def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, start_time):
+    # temp code [au]
+    logger.info("In monitoring terminate_job")
+    # --------------------------------
     elapsed_time = time.time() - start_time
     job_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
@@ -64,6 +82,9 @@ job_failed_duration = Gauge(JQUEUER_JOB_FAILED_DURATION,JQUEUER_JOB_FAILED_DURAT
 job_failed = Gauge(JQUEUER_JOB_FAILED,JQUEUER_JOB_FAILED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
 def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_time):
+    # temp code [au]
+    logger.info("In monitoring job_failed")
+    # --------------------------------
     elapsed_time = time.time() - fail_time
     job_failed_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
@@ -84,6 +105,9 @@ task_running = Gauge(JQUEUER_TASK_RUNNING,JQUEUER_TASK_RUNNING,["node_id","exper
 task_started = Gauge(JQUEUER_TASK_STARTED,JQUEUER_TASK_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id","task_id"])
 
 def run_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id):
+    # temp code [au]
+    logger.info("In monitoring run_task")
+    # --------------------------------
     task_started_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
@@ -101,6 +125,9 @@ task_accomplished = Gauge(JQUEUER_TASK_ACCOMPLISHED,JQUEUER_TASK_ACCOMPLISHED,["
 def terminate_task(
     node_id, experiment_id, service_name, qworker_id, job_id, task_id, start_time
 ):
+    # temp code [au]
+    logger.info("In monitoring terminate_task")
+    # --------------------------------
     elapsed_time = time.time() - start_time
     task_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     # In the previous case, this didn't include task_id.
@@ -121,6 +148,9 @@ task_failed = Gauge(JQUEUER_TASK_FAILED,JQUEUER_TASK_FAILED,["node_id","experime
 def task_failed(
     node_id, experiment_id, service_name, qworker_id, job_id, task_id, fail_time
 ):
+    # temp code [au]
+    logger.info("In monitoring task_failed")
+    # --------------------------------
     elapsed_time = time.time() - fail_time
     task_failed_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     # In the previous case, this didn't include task_id.
