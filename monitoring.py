@@ -42,15 +42,28 @@ job_running_timestamp = Gauge(JQUEUER_JOB_RUNNING_TIMESTAMP,JQUEUER_JOB_RUNNING_
 job_running = Gauge(JQUEUER_JOB_RUNNING,JQUEUER_JOB_RUNNING,["node_id","experiment_id","service_name","qworker_id","job_id"])
 job_started = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
+job_started.labels("noID","expID","srName","woID","jobID").set(1)
+job_started_timestamp.labels("noID","expID","srName","jobID").set(time.time())
+
 def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
     # temp code [au]
     logger.info("In monitoring run_job")
     # --------------------------------
-    job_started_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
-    job_started.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
-    
+    try:
+        job_started_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+        job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+        job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
+        job_started.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
+        logger.info("Exiting monitoring run_job")
+    except Exception as e:
+        logger.info("Exception in monitoring run_job:")
+        logger.info(e)
+    try:
+        job_s = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id"])
+        job_s.labels("noID","expID","srName","woID","jobID").set(1)
+    except Exception as e:
+        logger.info("Exception in monitoring run_job (2nd part):")
+        logger.info(e)
 
 # A specific job is accomplished
 JQUEUER_JOB_ACCOMPLISHED_TIMESTAMP = "jqueuer_job_accomplished_timestamp"
@@ -65,12 +78,16 @@ def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, star
     # temp code [au]
     logger.info("In monitoring terminate_job")
     # --------------------------------
-    elapsed_time = time.time() - start_time
-    job_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    #job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    job_accomplished_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
-    job_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
-    job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
+    try:
+        elapsed_time = time.time() - start_time
+        job_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+        #job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+        job_accomplished_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
+        job_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
+        job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
+    except Exception as e:
+        logger.info("Exception in monitoring terminate_job:")
+        logger.info(e)
 
 # A specific job is failed
 JQUEUER_JOB_FAILED_TIMESTAMP = "jqueuer_job_failed_timestamp"
@@ -79,19 +96,22 @@ JQUEUER_JOB_FAILED = "jqueuer_job_failed"
 
 job_failed_timestamp = Gauge(JQUEUER_JOB_FAILED_TIMESTAMP,JQUEUER_JOB_FAILED_TIMESTAMP,["node_id","experiment_id","service_name","job_id"])
 job_failed_duration = Gauge(JQUEUER_JOB_FAILED_DURATION,JQUEUER_JOB_FAILED_DURATION,["node_id","experiment_id","service_name","job_id"])
-job_failed = Gauge(JQUEUER_JOB_FAILED,JQUEUER_JOB_FAILED,["node_id","experiment_id","service_name","qworker_id","job_id"])
+job_failed_ga = Gauge(JQUEUER_JOB_FAILED,JQUEUER_JOB_FAILED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
 def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_time):
     # temp code [au]
     logger.info("In monitoring job_failed")
     # --------------------------------
-    elapsed_time = time.time() - fail_time
-    job_failed_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    #job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    job_failed_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
-    job_failed.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
-    job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
-
+    try:
+        elapsed_time = time.time() - fail_time
+        job_failed_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+        #job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+        job_failed_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
+        job_failed_ga.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
+        job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)    
+    except Exception as e:
+        logger.info("Exception in monitoring job_failed:")
+        logger.info(e)
 
 # A specific task is started
 JQUEUER_TASK_STARTED_TIMESTAMP = "jqueuer_task_started_timestamp"
@@ -108,10 +128,14 @@ def run_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id):
     # temp code [au]
     logger.info("In monitoring run_task")
     # --------------------------------
-    task_started_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
-    task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
-    task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
-    task_started.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
+    try:
+        task_started_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+        task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+        task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
+        task_started.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)    
+    except Exception as e:
+        logger.info("Exception in monitoring run_task:")
+        logger.info(e)
 
 # A specific task is accomplished
 JQUEUER_TASK_ACCOMPLISHED_TIMESTAMP = "jqueuer_task_accomplished_timestamp"
@@ -128,13 +152,18 @@ def terminate_task(
     # temp code [au]
     logger.info("In monitoring terminate_task")
     # --------------------------------
-    elapsed_time = time.time() - start_time
-    task_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
-    # In the previous case, this didn't include task_id.
-    #task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
-    task_accomplished_duration.labels(node_id,experiment_id,service_name,job_id,task_id).set(elapsed_time)
-    task_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
-    task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)
+    try:
+        elapsed_time = time.time() - start_time
+        task_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+        # In the previous case, this didn't include task_id.
+        #task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+        task_accomplished_duration.labels(node_id,experiment_id,service_name,job_id,task_id).set(elapsed_time)
+        task_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
+        task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)    
+    except Exception as e:
+        logger.info("Exception in monitoring terminate_task:")
+        logger.info(e)
+    
 
 # Task failed
 JQUEUER_TASK_FAILED_TIMESTAMP = "jqueuer_task_failed_timestamp"
@@ -143,7 +172,7 @@ JQUEUER_TASK_FAILED = "jqueuer_task_failed"
 
 task_failed_timestamp = Gauge(JQUEUER_TASK_FAILED_TIMESTAMP,JQUEUER_TASK_FAILED_TIMESTAMP,["node_id","experiment_id","service_name","job_id","task_id"])
 task_failed_duration = Gauge(JQUEUER_TASK_FAILED_DURATION,JQUEUER_TASK_FAILED_DURATION,["node_id","experiment_id","service_name","qworker_id","job_id","task_id"])
-task_failed = Gauge(JQUEUER_TASK_FAILED,JQUEUER_TASK_FAILED,["node_id","experiment_id","service_name","qworker_id","job_id","task_id"])
+task_failed_ga = Gauge(JQUEUER_TASK_FAILED,JQUEUER_TASK_FAILED,["node_id","experiment_id","service_name","qworker_id","job_id","task_id"])
 
 def task_failed(
     node_id, experiment_id, service_name, qworker_id, job_id, task_id, fail_time
@@ -151,10 +180,15 @@ def task_failed(
     # temp code [au]
     logger.info("In monitoring task_failed")
     # --------------------------------
-    elapsed_time = time.time() - fail_time
-    task_failed_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
-    # In the previous case, this didn't include task_id.
-    #task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
-    task_failed_duration.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(elapsed_time)
-    task_failed.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
-    task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)
+    try:
+        elapsed_time = time.time() - fail_time
+        task_failed_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+        # In the previous case, this didn't include task_id.
+        #task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+        task_failed_duration.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(elapsed_time)
+        task_failed_ga.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
+        task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)    
+    except Exception as e:
+        logger.info("Exception in monitoring terminate_task:")
+        logger.info(e)
+    
