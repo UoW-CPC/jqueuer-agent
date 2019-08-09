@@ -38,7 +38,7 @@ JQUEUER_JOB_RUNNING = "jqueuer_job_running"
 JQUEUER_JOB_STARTED = "jqueuer_job_started"
 
 job_started_timestamp = Gauge(JQUEUER_JOB_STARTED_TIMESTAMP,JQUEUER_JOB_STARTED_TIMESTAMP,["node_id","experiment_id","service_name","job_id"])
-job_running_timestamp = Histogram(JQUEUER_JOB_RUNNING_TIMESTAMP,JQUEUER_JOB_RUNNING_TIMESTAMP,["node_id","experiment_id","service_name","job_id"])
+job_running_timestamp = Gauge(JQUEUER_JOB_RUNNING_TIMESTAMP,JQUEUER_JOB_RUNNING_TIMESTAMP,["node_id","experiment_id","service_name","job_id"])
 job_running = Gauge(JQUEUER_JOB_RUNNING,JQUEUER_JOB_RUNNING,["node_id","experiment_id","service_name","qworker_id","job_id"])
 job_started = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
@@ -67,7 +67,7 @@ def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, star
     # --------------------------------
     elapsed_time = time.time() - start_time
     job_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+    #job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_accomplished_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
     job_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
@@ -87,7 +87,7 @@ def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_ti
     # --------------------------------
     elapsed_time = time.time() - fail_time
     job_failed_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
-    job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
+    #job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_failed_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
     job_failed.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
@@ -100,7 +100,7 @@ JQUEUER_TASK_RUNNING = "jqueuer_task_running"
 JQUEUER_TASK_STARTED = "jqueuer_task_started"
 
 task_started_timestamp = Gauge(JQUEUER_TASK_STARTED_TIMESTAMP,JQUEUER_TASK_STARTED_TIMESTAMP,["node_id","experiment_id","service_name","job_id","task_id"])
-task_running_timestamp = Histogram(JQUEUER_TASK_RUNNING_TIMESTAMP,JQUEUER_TASK_RUNNING_TIMESTAMP,["node_id","experiment_id","service_name","job_id","task_id"]) 
+task_running_timestamp = Gauge(JQUEUER_TASK_RUNNING_TIMESTAMP,JQUEUER_TASK_RUNNING_TIMESTAMP,["node_id","experiment_id","service_name","job_id","task_id"]) 
 task_running = Gauge(JQUEUER_TASK_RUNNING,JQUEUER_TASK_RUNNING,["node_id","experiment_id","service_name","qworker_id","job_id","task_id"])
 task_started = Gauge(JQUEUER_TASK_STARTED,JQUEUER_TASK_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id","task_id"])
 
@@ -131,7 +131,7 @@ def terminate_task(
     elapsed_time = time.time() - start_time
     task_accomplished_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     # In the previous case, this didn't include task_id.
-    task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+    #task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     task_accomplished_duration.labels(node_id,experiment_id,service_name,job_id,task_id).set(elapsed_time)
     task_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)
@@ -154,7 +154,7 @@ def task_failed(
     elapsed_time = time.time() - fail_time
     task_failed_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     # In the previous case, this didn't include task_id.
-    task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
+    #task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     task_failed_duration.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(elapsed_time)
     task_failed.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)
