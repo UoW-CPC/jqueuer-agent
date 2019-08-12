@@ -59,10 +59,16 @@ def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
         logger.info("Exception in monitoring run_job:")
         logger.info(e)
     try:
-        job_s = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id"])
-        job_s.labels("noID","expID","srName","woID","jobID").set(1)
+        job_s = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["new_node_id","experiment_id","service_name","qworker_id","job_id"])
+        job_s.labels(node_id,experiment_id,service_name,qworker_id,job_id).inc()
     except Exception as e:
         logger.info("Exception in monitoring run_job (2nd part):")
+        logger.info(e)
+
+    try:
+        job_started.labels("noID","expID","srName","woID","jobID").inc()
+    except Exception as e:
+        logger.info("Exception in monitoring run_job (3rd part):")
         logger.info(e)
 
 # A specific job is accomplished
