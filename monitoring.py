@@ -43,6 +43,7 @@ job_running = Gauge(JQUEUER_JOB_RUNNING,JQUEUER_JOB_RUNNING,["node_id","experime
 job_started = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["node_id","experiment_id","service_name","qworker_id","job_id"])
 
 job_started.labels("noID","expID","srName","woID","jobID").set(1)
+job_started.labels("noID","expID","srName","woID","jobID").inc()
 job_started_timestamp.labels("noID","expID","srName","jobID").set(time.time())
 
 def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
@@ -50,22 +51,25 @@ def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
     logger.info("In monitoring run_job")
     # --------------------------------
     try:
+        print ("Gauge Name:" + job_started._name)
+
         job_started_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
         job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
         job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
         job_started.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
-        logger.info("Exiting monitoring run_job")
     except Exception as e:
         logger.info("Exception in monitoring run_job:")
         logger.info(e)
     try:
-        job_s = Gauge(JQUEUER_JOB_STARTED,JQUEUER_JOB_STARTED,["new_node_id","experiment_id","service_name","qworker_id","job_id"])
+        logger.info("monitoring run_job (2nd part")
+        job_s = Gauge(node_id,node_id,["new_node_id","experiment_id","service_name","qworker_id","job_id"])
         job_s.labels(node_id,experiment_id,service_name,qworker_id,job_id).inc()
     except Exception as e:
         logger.info("Exception in monitoring run_job (2nd part):")
         logger.info(e)
 
     try:
+        logger.info("monitoring run_job (3rd part)")
         job_started.labels("noID","expID","srName","woID","jobID").inc()
     except Exception as e:
         logger.info("Exception in monitoring run_job (3rd part):")
