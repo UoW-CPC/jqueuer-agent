@@ -1,8 +1,6 @@
 import os
 
 import redis
-# from datadog import initialize
-# from datadog import statsd
 
 # Job Queue Prefix
 JOB_QUEUE_PREFIX = "jqueue_service_"
@@ -13,9 +11,6 @@ broker_username = os.getenv("RABBIT_USER", "admin")
 broker_password = os.getenv("RABBIT_PASS", "mypass")
 broker_server = os.getenv("RABBIT_SERVER", "jqueuer-rabbit")
 broker_port = os.getenv("RABBIT_PORT", 5672)
-
-# Metric port configuration
-metrics_agent_port = os.getenv("METRIC_PORT", 9081)
 
 def broker():
     broker = broker_protocol + "://" + broker_username

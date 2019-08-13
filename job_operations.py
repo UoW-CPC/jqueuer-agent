@@ -13,12 +13,6 @@ import monitoring
 import container_worker as jqw
 from container_worker import job_app
 
-# temp code [au]
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-# --------------------------------
-
 # What to do when a job fails
 class JQueuer_Task(celery.Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
@@ -32,9 +26,9 @@ container_dead = False
 @job_app.task(bind=True, acks_late=True, track_started=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
     global index, container_dead
-    if container_dead:
-        time.sleep(30)
-        raise Reject("my container is dead", requeue=True)
+    # if container_dead:
+    #     time.sleep(30)
+    #     raise Reject("my container is dead", requeue=True)
     index = index + 1
     job_params = job["params"]
     job_command = job["command"]
@@ -42,10 +36,6 @@ def add(self, exp_id, job_queue_id, job):
     output = ""
 
     worker_id = self.request.hostname.split("@")[1]
-
-    # temp code [au]
-    logger.info("In job_operations run_job")
-    # --------------------------------
 
     monitoring.run_job(
         getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"]
@@ -76,7 +66,7 @@ def add(self, exp_id, job_queue_id, job):
         )
         container_dead = True
         self.update_state(state="RETRY")
-        time.sleep(200)
+        time.sleep(60) # Changed from 200 to 60
 
     return output
 
