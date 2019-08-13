@@ -14,7 +14,7 @@ node_counter = Counter(JQUEUER_WORKER_COUNT, "JQueuer Worker", ["node_id", "serv
 
 def add_worker(node_id, service_name):
     node_counter.labels(node_id,service_name).inc()
-    write_to_textfile(, registry)
+    write_to_textfile(METRICS_FILE, registry)
 
 
 def terminate_worker(node_id, service_name):
