@@ -1,12 +1,18 @@
 import time
 import sys
 
-from prometheus_client import start_http_server, Gauge, Counter, CollectorRegistry, push_to_gateway
+from prometheus_client import start_http_server, Gauge, Counter, CollectorRegistry, write_to_textfile, push_to_gateway
 from parameters import pushgateway_url
+
+# temp code [au]
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+# --------------------------------
 
 # Container relevant address for prometheous metrics export
 METRICS_FILE = 'jqueuer-agent-metrics.prom' 
-print("pushgateway_url:" + pushgateway_url)
+logger.info("pushgateway_url:" + pushgateway_url)
 
 registry = CollectorRegistry()
     # Number of workers
@@ -17,7 +23,7 @@ node_counter = Counter(JQUEUER_WORKER_COUNT, "JQueuer Worker", ["node_id", "serv
 def add_worker(node_id, experiment_id, service_name):
     node_counter.labels(node_id,service_name).inc()
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
-    write_to_textfile(METRICS_FILE, registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 
 def terminate_worker(node_id,experiment_id, service_name):
@@ -43,7 +49,8 @@ def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_started.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
-    #write_to_textfile(METRICS_FILE, registry)
+    write_to_textfile(METRICS_FILE, registry)
+    logger.info("pushgateway_url:" + pushgateway_url)
 
 # A specific job is accomplished
 JQUEUER_JOB_ACCOMPLISHED_TIMESTAMP = "jqueuer_job_accomplished_timestamp"
