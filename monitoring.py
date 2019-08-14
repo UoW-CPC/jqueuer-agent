@@ -1,10 +1,11 @@
 import time
 import sys
 
-from prometheus_client import start_http_server, Gauge, Counter, CollectorRegistry, write_to_textfile
+from prometheus_client import start_http_server, Gauge, Counter, CollectorRegistry, push_to_gateway
+from parameters import pushgateway_url
 
 # Container relevant address for prometheous metrics export
-METRICS_FILE = 'prom-metrics/jqueuer-agent-metrics.prom' 
+#METRICS_FILE = 'prom-metrics/jqueuer-agent-metrics.prom' 
 
 registry = CollectorRegistry()
     # Number of workers
@@ -12,14 +13,16 @@ JQUEUER_WORKER_COUNT = "jqueuer_worker_count"
 node_counter = Counter(JQUEUER_WORKER_COUNT, "JQueuer Worker", ["node_id", "service_name"],registry=registry)
 
 
-def add_worker(node_id, service_name):
+def add_worker(node_id, experiment_id, service_name):
     node_counter.labels(node_id,service_name).inc()
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+ #   write_to_textfile(METRICS_FILE, registry)
 
 
-def terminate_worker(node_id, service_name):
+def terminate_worker(node_id,experiment_id, service_name):
     node_counter.labels(node_id,service_name).dec()
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 
 # Running a specific job
@@ -38,7 +41,8 @@ def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
     job_running_timestamp.labels(node_id,experiment_id,service_name,job_id).set(time.time())
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_started.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific job is accomplished
 JQUEUER_JOB_ACCOMPLISHED_TIMESTAMP = "jqueuer_job_accomplished_timestamp"
@@ -56,7 +60,8 @@ def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, star
     job_accomplished_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
     job_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific job is failed
 JQUEUER_JOB_FAILED_TIMESTAMP = "jqueuer_job_failed_timestamp"
@@ -74,7 +79,8 @@ def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_ti
     job_failed_duration.labels(node_id,experiment_id,service_name,job_id).set(elapsed_time)
     job_failed_ga.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)    
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific task is started
 JQUEUER_TASK_STARTED_TIMESTAMP = "jqueuer_task_started_timestamp"
@@ -92,7 +98,8 @@ def run_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id):
     task_running_timestamp.labels(node_id,experiment_id,service_name,job_id,task_id).set(time.time())
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_started.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1) 
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific task is accomplished
 JQUEUER_TASK_ACCOMPLISHED_TIMESTAMP = "jqueuer_task_accomplished_timestamp"
@@ -111,7 +118,8 @@ def terminate_task(
     task_accomplished_duration.labels(node_id,experiment_id,service_name,job_id,task_id).set(elapsed_time)
     task_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0) 
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
 
 # Task failed
 JQUEUER_TASK_FAILED_TIMESTAMP = "jqueuer_task_failed_timestamp"
@@ -130,4 +138,5 @@ def task_failed(
     task_failed_duration.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(elapsed_time)
     task_failed_ga.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)
-    write_to_textfile(METRICS_FILE, registry)
+    push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
+    #write_to_textfile(METRICS_FILE, registry)
