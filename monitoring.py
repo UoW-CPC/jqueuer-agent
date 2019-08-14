@@ -5,7 +5,8 @@ from prometheus_client import start_http_server, Gauge, Counter, CollectorRegist
 from parameters import pushgateway_url
 
 # Container relevant address for prometheous metrics export
-#METRICS_FILE = 'prom-metrics/jqueuer-agent-metrics.prom' 
+METRICS_FILE = 'jqueuer-agent-metrics.prom' 
+print("pushgateway_url:" + pushgateway_url)
 
 registry = CollectorRegistry()
     # Number of workers
@@ -16,7 +17,7 @@ node_counter = Counter(JQUEUER_WORKER_COUNT, "JQueuer Worker", ["node_id", "serv
 def add_worker(node_id, experiment_id, service_name):
     node_counter.labels(node_id,service_name).inc()
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry)
- #   write_to_textfile(METRICS_FILE, registry)
+    write_to_textfile(METRICS_FILE, registry)
 
 
 def terminate_worker(node_id,experiment_id, service_name):
