@@ -56,15 +56,3 @@ def backend(db):
         + str(db)
     )
     return backend
-
-
-# Prometheus exporer configuration
-# STATSD_SERVER = os.getenv("STATSD_SERVER", "jqueuer-statsd")
-# STATSD_PORT = os.getenv("STATSD_PORT", 9125)
-# STATSD_OPTIONS = {
-#     "api_key": "jqueuer_api_key",
-#     "app_key": "jqueuer_app_key",
-#     "statsd_host": STATSD_SERVER,
-#     "statsd_port": STATSD_PORT,
-# }
-# initialize(**STATSD_OPTIONS)

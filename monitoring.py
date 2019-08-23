@@ -2,18 +2,8 @@ import time
 import sys
 import uuid
 
-from prometheus_client import start_http_server, Gauge, Counter, CollectorRegistry, write_to_textfile, push_to_gateway
+from prometheus_client import start_http_server, Gauge, Counter, CollectorRegistry, push_to_gateway
 from parameters import pushgateway_url
-
-# temp code [au]
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-# --------------------------------
-
-# Container relevant address for prometheous metrics export
-METRICS_FILE = 'jqueuer-agent-metrics.prom' 
-logger.info("pushgateway_url:" + pushgateway_url)
 
 registry = CollectorRegistry()
 instance_id = uuid.uuid4()
@@ -26,13 +16,11 @@ node_counter = Counter(JQUEUER_WORKER_COUNT, "JQueuer Worker", ["node_id", "serv
 def add_worker(node_id, experiment_id, service_name):
     node_counter.labels(node_id,service_name).inc()
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
 
 
 def terminate_worker(node_id,experiment_id, service_name):
     node_counter.labels(node_id,service_name).dec()
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
 
 
 # Running a specific job
@@ -52,8 +40,6 @@ def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_started.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    write_to_textfile(METRICS_FILE, registry)
-    logger.info("pushgateway_url:" + pushgateway_url)
 
 # A specific job is accomplished
 JQUEUER_JOB_ACCOMPLISHED_TIMESTAMP = "jqueuer_job_accomplished_timestamp"
@@ -72,7 +58,6 @@ def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, star
     job_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific job is failed
 JQUEUER_JOB_FAILED_TIMESTAMP = "jqueuer_job_failed_timestamp"
@@ -91,7 +76,6 @@ def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_ti
     job_failed_ga.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(1)
     job_running.labels(node_id,experiment_id,service_name,qworker_id,job_id).set(0)    
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific task is started
 JQUEUER_TASK_STARTED_TIMESTAMP = "jqueuer_task_started_timestamp"
@@ -110,7 +94,6 @@ def run_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id):
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_started.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1) 
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
 
 # A specific task is accomplished
 JQUEUER_TASK_ACCOMPLISHED_TIMESTAMP = "jqueuer_task_accomplished_timestamp"
@@ -130,7 +113,6 @@ def terminate_task(
     task_accomplished.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0) 
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
 
 # Task failed
 JQUEUER_TASK_FAILED_TIMESTAMP = "jqueuer_task_failed_timestamp"
@@ -150,4 +132,3 @@ def task_failed(
     task_failed_ga.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(1)
     task_running.labels(node_id,experiment_id,service_name,qworker_id,job_id,task_id).set(0)
     push_to_gateway(pushgateway_url, job=experiment_id, registry=registry, grouping_key={'instance':instance_id})
-    #write_to_textfile(METRICS_FILE, registry)
