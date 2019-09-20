@@ -1,3 +1,3 @@
 celery[redis]
-datadog
+prometheus_client
 docker

@@ -26,9 +26,9 @@ container_dead = False
 @job_app.task(bind=True, acks_late=True, track_started=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
     global index, container_dead
-    if container_dead:
-        time.sleep(30)
-        raise Reject("my container is dead", requeue=True)
+    # if container_dead:
+    #     time.sleep(30)
+    #     raise Reject("my container is dead", requeue=True)
     index = index + 1
     job_params = job["params"]
     job_command = job["command"]
@@ -66,7 +66,7 @@ def add(self, exp_id, job_queue_id, job):
         )
         container_dead = True
         self.update_state(state="RETRY")
-        time.sleep(200)
+        time.sleep(60) # Changed from 200 to 60
 
     return output
 

@@ -30,7 +30,7 @@ job_workers = {}
 
 def worker(container, node_id):
     # Add the worker to the monitoring
-    monitoring.add_worker(node_id, container["service_name"])
+    monitoring.add_worker(node_id, container["experiment_id"], container["service_name"])
 
     # Start the app in a new process
     process = subprocess.Popen(
@@ -153,5 +153,7 @@ if __name__ == "__main__":
         node_id = sys.argv[1]
     else:
         node_id = "default_id_1"
+    # start jqueuer agent process
     start(node_id)
+
 
