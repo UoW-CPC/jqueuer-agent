@@ -11,43 +11,40 @@ logger = logging.getLogger(__name__)
 
 instance_id = uuid.uuid4()
 def add_worker(node_id, experiment_id, service_name):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
-    post_metric("add_worker",labels)
+    labels = {'metric_type': 'add_worker', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
+    post_metric(labels)
 
 def terminate_worker(node_id,experiment_id, service_name):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
-    post_metric("terminate_worker",labels)
+    labels = {'metric_type': 'terminate_worker', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
+    post_metric(labels)
 
 def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id}
-    post_metric("run_job",labels)
+    labels = {'metric_type': 'run_job', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id}
+    post_metric(labels)
 
 def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, start_time):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'start_time': start_time}
-    post_metric("terminate_job",labels)
+    labels = {'metric_type': 'terminate_job', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'start_time': start_time}
+    post_metric(labels)
 
 def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_time):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'fail_time': fail_time}
-    post_metric("job_failed",labels)
+    labels = {'metric_type': 'job_failed', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'fail_time': fail_time}
+    post_metric(labels)
 
 def run_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'task_id': task_id}
-    post_metric("run_task",labels)
+    labels = {'metric_type': 'run_task', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'task_id': task_id}
+    post_metric(labels)
 
 def terminate_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id, start_time):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'start_time': start_time}
-    post_metric("terminate_task",labels)
+    labels = {'metric_type': 'terminate_task', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'start_time': start_time}
+    post_metric(labels)
     
 def task_failed(node_id, experiment_id, service_name, qworker_id, job_id, task_id, fail_time):
-    labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'fail_time': fail_time}
-    post_metric("task_failed",labels)
+    labels = {'metric_type': 'task_failed', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'fail_time': fail_time}
+    post_metric(labels)
 
-def post_metric(metric_type,labels):
+def post_metric(data):
     logger.info("Post metric - The metric type is: {}, where the labels are: {}".format(metric_type,labels))
     logger.info("Post metric - The url is: {}".format(jqueuer_service_url))
-    data = {}
-    data['metric_type'] = metric_type
-    data['labels']=labels
     try:
         json_data = json.dumps(data)
         r = requests.post(url = jqueuer_service_url, data = json_data) 
