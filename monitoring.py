@@ -8,7 +8,6 @@ import logging
 from parameters import jqueuer_service_url
 
 logger = logging.getLogger(__name__)
-logger.info("Monitoring - The url is: {}".format(jqueuer_service_url))
 
 instance_id = uuid.uuid4()
 def add_worker(node_id, experiment_id, service_name):
@@ -45,9 +44,16 @@ def task_failed(node_id, experiment_id, service_name, qworker_id, job_id, task_i
 
 def post_metric(metric_type,labels):
     logger.info("Post metric - The metric type is: {}, where the labels are: {}".format(metric_type,labels))
+    logger.info("Post metric - The url is: {}".format(jqueuer_service_url))
     data = {}
     data['metric_type'] = metric_type
     data['labels']=labels
-    json_data = json.dumps(data)
-    r = requests.post(url = jqueuer_service_url, data = json_data) 
-    return r.text
+    try:
+        json_data = json.dumps(data)
+        r = requests.post(url = jqueuer_service_url, data = json_data) 
+        logger.info(r.text)
+        return r.text    
+    except Exception as e:
+        logger.error(e)
+    return ""
+    
