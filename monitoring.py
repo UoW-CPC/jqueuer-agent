@@ -3,8 +3,13 @@ import sys
 import requests
 import json
 import uuid
+import logging
 
 from parameters import jqueuer_service_url
+
+logger = logging.getLogger(__name__)
+logger.info("Monitoring - The url is: {}".format(jqueuer_service_url))
+
 instance_id = uuid.uuid4()
 def add_worker(node_id, experiment_id, service_name):
     labels = {'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
@@ -39,6 +44,7 @@ def task_failed(node_id, experiment_id, service_name, qworker_id, job_id, task_i
     post_metric("task_failed",labels)
 
 def post_metric(metric_type,labels):
+    logger.info("Post metric - The metric type is: {}, where the labels are: {}".format(metric_type,labels))
     data = {}
     data['metric_type'] = metric_type
     data['labels']=labels
