@@ -43,7 +43,7 @@ def task_failed(node_id, experiment_id, service_name, qworker_id, job_id, task_i
     post_metric(labels)
 
 def post_metric(data):
-    logger.info("Post metric - The metric type is: {}, where the labels are: {}".format(metric_type,labels))
+    logger.info("Post metric - The data for metrics: {}".format(data))
     logger.info("Post metric - The url is: {}".format(jqueuer_service_url))
     try:
         json_data = json.dumps(data)
