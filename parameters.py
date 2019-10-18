@@ -17,6 +17,11 @@ PUSHGATEWAY_SERVER = os.getenv("PUSHGATEWAY_SERVER", "jqueuer-pushgateway")
 PUSHGATEWAY_PORT = os.getenv("PUSHGATEWAY_PORT", "9091")
 pushgateway_url = PUSHGATEWAY_SERVER + ":" + PUSHGATEWAY_PORT
 
+# JQueuer Manager Service configuration
+JQUEUER_SERVER = os.getenv("JQUEUER_MANAGER_SERVICE_NAME", "jqueuer-manager")
+JQUEUER_PORT = os.getenv("JQUEUER_MANAGER_SERVICE_PORT", "8081")
+jqueuer_service_url = JQUEUER_SERVER + ":" + JQUEUER_PORT + "/experiment/metrics"
+
 def broker():
     broker = broker_protocol + "://" + broker_username
     if broker_password != "":
