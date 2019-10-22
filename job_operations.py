@@ -66,7 +66,8 @@ def add(self, exp_id, job_queue_id, job):
         )
         container_dead = True
         self.update_state(state="RETRY")
-        time.sleep(60) # Changed from 200 to 60
+        raise Reject("my container is dead", requeue=True)
+        #time.sleep(60) # Changed from 200 to 60
 
     return output
 
