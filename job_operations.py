@@ -17,6 +17,7 @@ from container_worker import job_app
 class JQueuer_Task(celery.Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         print("{0!r} failed: {1!r}".format(task_id, exc))
+        time.sleep(30)
 
 
 index = 0
