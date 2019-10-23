@@ -7,7 +7,7 @@ import sys
 import os
 
 import celery
-from celery.exceptions import Reject
+from celery.exceptions import Reject, WorkerTerminate
 
 import monitoring
 import container_worker as jqw
@@ -17,19 +17,20 @@ from container_worker import job_app
 class JQueuer_Task(celery.Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         print("{0!r} failed: {1!r}".format(task_id, exc))
-        time.sleep(30)
+        #time.sleep(30)
 
 
 index = 0
 container_dead = False
 
 # Implementing the add function to start a job execution
-@job_app.task(bind=True, acks_late=True, track_started=True, base=JQueuer_Task)  #
+@job_app.task(bind=True, acks_late=True, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)
 def add(self, exp_id, job_queue_id, job):
     global index, container_dead
-    # if container_dead:
-    #     time.sleep(30)
-    #     raise Reject("my container is dead", requeue=True)
+    if container_dead:
+        time.sleep(30)
+        raise WorkerTerminate()
+        #raise Reject("my container is dead", requeue=True)
     index = index + 1
     job_params = job["params"]
     job_command = job["command"]
@@ -67,7 +68,7 @@ def add(self, exp_id, job_queue_id, job):
         )
         container_dead = True
         self.update_state(state="RETRY")
-        raise Reject("my container is dead", requeue=True)
+        raise WorkerTerminate()
         #time.sleep(60) # Changed from 200 to 60
 
     return output
