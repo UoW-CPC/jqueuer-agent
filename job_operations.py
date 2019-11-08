@@ -7,7 +7,7 @@ import sys
 import os
 
 import celery
-from celery.exceptions import Reject, WorkerTerminate
+from celery.exceptions import Reject, WorkerTerminate, WorkerShutdown
 
 import monitoring
 import container_worker as jqw
@@ -42,7 +42,7 @@ def add(self, exp_id, job_queue_id, job):
     monitoring.run_job(
         getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"]
     )
-
+    logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
     tasks = job["tasks"]
     try:
         if isinstance(tasks, list):
@@ -58,9 +58,9 @@ def add(self, exp_id, job_queue_id, job):
             job_start_time,
         )
         if response.lower() == "stop_worker":
-            logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
+            logger.info("Terminate job - stop_worker")
             self.update_state(state="SUCCESS")
-            raise WorkerTerminate()
+            raise WorkerShutdown()
     except subprocess.CalledProcessError as e:
         response = monitoring.job_failed(
             getNodeID(worker_id),
@@ -71,9 +71,9 @@ def add(self, exp_id, job_queue_id, job):
             job_start_time,
         )
         if response.lower() == "stop_worker":
-            logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
+            logger.info("Terminate job - stop_worker")
             self.update_state(state="REVOKED")
-            raise WorkerTerminate()
+            raise WorkerShutdown()
         # container_dead = True
         # self.update_state(state="RETRY")
         time.sleep(10) # Changed from 200 to 10
