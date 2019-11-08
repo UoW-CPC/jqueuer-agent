@@ -7,11 +7,12 @@ import sys
 import os
 
 import celery
-from celery.exceptions import Reject
+from celery.exceptions import Reject, WorkerTerminate
 
 import monitoring
 import container_worker as jqw
 from container_worker import job_app
+import logging
 
 # What to do when a job fails
 class JQueuer_Task(celery.Task):
@@ -21,9 +22,10 @@ class JQueuer_Task(celery.Task):
 
 index = 0
 container_dead = False
+logger = logging.getLogger(__name__)
 
 # Implementing the add function to start a job execution
-@job_app.task(bind=True, acks_late=True, track_started=True, base=JQueuer_Task)  #
+@job_app.task(bind=True, acks_late=True, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
     global index, container_dead
     # if container_dead:
@@ -47,7 +49,7 @@ def add(self, exp_id, job_queue_id, job):
             output = process_list(worker_id, exp_id, job_queue_id, job, job_start_time)
         else:
             output = process_array(worker_id, exp_id, job_queue_id, job, job_start_time)
-        monitoring.terminate_job(
+        response = monitoring.terminate_job(
             getNodeID(worker_id),
             exp_id,
             getServiceName(worker_id),
@@ -55,8 +57,12 @@ def add(self, exp_id, job_queue_id, job):
             job["id"],
             job_start_time,
         )
+        if response.lower() == "stop_worker":
+            logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
+            self.update_state(state="SUCCESS")
+            raise WorkerTerminate()
     except subprocess.CalledProcessError as e:
-        monitoring.job_failed(
+        response = monitoring.job_failed(
             getNodeID(worker_id),
             exp_id,
             getServiceName(worker_id),
@@ -64,9 +70,13 @@ def add(self, exp_id, job_queue_id, job):
             job["id"],
             job_start_time,
         )
-        container_dead = True
-        self.update_state(state="RETRY")
-        time.sleep(60) # Changed from 200 to 60
+        if response.lower() == "stop_worker":
+            logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
+            self.update_state(state="REVOKED")
+            raise WorkerTerminate()
+        # container_dead = True
+        # self.update_state(state="RETRY")
+        time.sleep(10) # Changed from 200 to 10
 
     return output
 

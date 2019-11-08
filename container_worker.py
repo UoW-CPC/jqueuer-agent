@@ -52,5 +52,5 @@ if __name__ == "__main__":
         "loglevel": "INFO",
         "traceback": True,
     }
-    job_worker.run(**job_options)
+    job_worker.run(**job_options)    
 
