@@ -58,12 +58,11 @@ def add(self, exp_id, job_queue_id, job):
             job_start_time,
         )
         if response.lower() == "stop_worker":
+            time.sleep(10)
             self.update_state(state="SUCCESS")
             container_dead = True
-            output = pause_container(worker_id)
-            logger.info("Terminate job - Pause command output: {0}".format(output))
-            time.sleep(10)
-            
+            pause_output = pause_container(worker_id)
+            logger.info("Terminate job - Pause command output: {0}".format(pause_output))
     except subprocess.CalledProcessError as e:
         response = monitoring.job_failed(
             getNodeID(worker_id),
@@ -76,8 +75,8 @@ def add(self, exp_id, job_queue_id, job):
         if response.lower() == "stop_worker":
             self.update_state(state="REVOKED")
             container_dead = True
-            output = pause_container(worker_id)
-            logger.info("Failed job - Pause command output: {0}".format(output))
+            pause_output = pause_container(worker_id)
+            logger.info("Failed job - Pause command output: {0}".format(pause_output))
         # self.update_state(state="RETRY")
         time.sleep(10) # Changed from 200 to 10
 
