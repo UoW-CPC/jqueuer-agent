@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 @job_app.task(bind=True, acks_late=True, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
     global index, container_dead
-    # if container_dead:
-    #     time.sleep(30)
-    #     raise Reject("my container is dead", requeue=True)
+    if container_dead:
+        time.sleep(15)
+        raise Reject("my container is dead", requeue=True)
     index = index + 1
     job_params = job["params"]
     job_command = job["command"]
@@ -38,11 +38,10 @@ def add(self, exp_id, job_queue_id, job):
     output = ""
 
     worker_id = self.request.hostname.split("@")[1]
-
+    logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
     monitoring.run_job(
         getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"]
     )
-    logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
     tasks = job["tasks"]
     try:
         if isinstance(tasks, list):
@@ -58,10 +57,10 @@ def add(self, exp_id, job_queue_id, job):
             job_start_time,
         )
         if response.lower() == "stop_worker":
-            logger.info("Terminate job - stop_worker")
             self.update_state(state="SUCCESS")
-            output = stop_container(worker_id)
-            logger.info("Stop command output: {0}".format(output))
+            output = pause_container(worker_id)            
+            container_dead = True
+            time.sleep(10)
     except subprocess.CalledProcessError as e:
         response = monitoring.job_failed(
             getNodeID(worker_id),
@@ -72,10 +71,10 @@ def add(self, exp_id, job_queue_id, job):
             job_start_time,
         )
         if response.lower() == "stop_worker":
-            logger.info("Failed job - stop_worker")
-            output = stop_container(worker_id)
-            logger.info("Stop command output: {0}".format(output))
-        # container_dead = True
+            self.update_state(state="REVOKED")
+            output = pause_container(worker_id)
+            logger.info("Terminate job - Pause command output: {0}".format(output))
+            container_dead = True
         # self.update_state(state="RETRY")
         time.sleep(10) # Changed from 200 to 10
 
@@ -97,7 +96,7 @@ def getContainerID(worker_id):
     return worker_id.split("##")[2]
 
 # Stop container
-def stop_container(worker_id):
+def pause_container(worker_id):
     command = (
             ["docker", "stop", getContainerID(worker_id)]
         )
