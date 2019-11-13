@@ -98,7 +98,7 @@ def getContainerID(worker_id):
 # Stop container
 def pause_container(worker_id):
     command = (
-            ["docker", "stop", getContainerID(worker_id)]
+            ["docker", "pause", getContainerID(worker_id)]
         )
     output = subprocess.check_output(command)
     if isinstance(output, bytes):
