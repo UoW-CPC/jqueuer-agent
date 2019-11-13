@@ -60,7 +60,8 @@ def add(self, exp_id, job_queue_id, job):
         if response.lower() == "stop_worker":
             logger.info("Terminate job - stop_worker")
             self.update_state(state="SUCCESS")
-            raise WorkerShutdown()
+            output = stop_container(worker_id)
+            logger.info("Stop command output: {0}".format(output))
     except subprocess.CalledProcessError as e:
         response = monitoring.job_failed(
             getNodeID(worker_id),
@@ -71,9 +72,9 @@ def add(self, exp_id, job_queue_id, job):
             job_start_time,
         )
         if response.lower() == "stop_worker":
-            logger.info("Terminate job - stop_worker")
-            self.update_state(state="REVOKED")
-            raise WorkerShutdown()
+            logger.info("Failed job - stop_worker")
+            output = stop_container(worker_id)
+            logger.info("Stop command output: {0}".format(output))
         # container_dead = True
         # self.update_state(state="RETRY")
         time.sleep(10) # Changed from 200 to 10
@@ -95,6 +96,15 @@ def getServiceName(worker_id):
 def getContainerID(worker_id):
     return worker_id.split("##")[2]
 
+# Stop container
+def stop_container(worker_id):
+    command = (
+            ["docker", "stop", getContainerID(worker_id)]
+        )
+    output = subprocess.check_output(command)
+    if isinstance(output, bytes):
+        output = output.decode()
+    return output
 
 # Process a list of tasks
 def process_list(worker_id, exp_id, job_queue_id, job, job_start_time):
