@@ -12,10 +12,8 @@ broker_password = os.getenv("RABBIT_PASS", "mypass")
 broker_server = os.getenv("RABBIT_SERVER", "jqueuer-rabbit")
 broker_port = os.getenv("RABBIT_PORT", 5672)
 
-# Pushgateway configuration
-PUSHGATEWAY_SERVER = os.getenv("PUSHGATEWAY_SERVER", "jqueuer-pushgateway")
-PUSHGATEWAY_PORT = os.getenv("PUSHGATEWAY_PORT", "9091")
-pushgateway_url = PUSHGATEWAY_SERVER + ":" + PUSHGATEWAY_PORT
+# Jqueuer job max retries configuration
+jqueuer_job_max_retries  = os.getenv("JQUEUER_JOB_MAX_RETRIES", 3)
 
 # JQueuer Manager Service configuration
 JQUEUER_SERVER = os.getenv("JQUEUER_MANAGER_SERVICE_NAME", "jqueuer-manager")
