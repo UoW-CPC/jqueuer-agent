@@ -17,7 +17,46 @@ import logging
 # What to do when a job fails
 class JQueuer_Task(celery.Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        print("{0!r} failed: {1!r}".format(task_id, exc))
+        log_message = ('on_failure: Task {task}[{t_id}]:\n'
+                   '\nargs: {args}\n\nkwargs: {kwargs}\n'
+                   '\n{einfo}\n\nretries:{retries}\n').format(task=self.name,
+                                       t_id=task_id,
+                                       args=args,
+                                       kwargs=kwargs,
+                                       einfo=einfo,
+                                       retries=self.request.retries)
+        logger.info(log_message)
+
+    def on_retry(self,exc, task_id, args, kwargs, einfo):
+        log_message = ('on_retry: Task {task}[{t_id}]:\n'
+                   '\nargs: {args}\n\nkwargs: {kwargs}\n'
+                   '\n{einfo}\n\nretries:{retries}\n').format(task=self.name,
+                                       t_id=task_id,
+                                       args=args,
+                                       kwargs=kwargs,
+                                       einfo=einfo,
+                                       retries=self.request.retries)
+        logger.info(log_message)
+
+    def on_success(self,retval, task_id, args, kwargs):
+        log_message = ('On_Success: Task {task}[{t_id}]:\n'
+                   '\nargs: {args}\n\nkwargs: {kwargs}\n'
+                   ).format(task=self.name,
+                                       t_id=task_id,
+                                       args=args,
+                                       kwargs=kwargs)
+        logger.info(log_message)
+    
+    def after_return(self, status, retval, task_id, args, kwargs, einfo): 
+        log_message = ('after_return: Task {task}[{t_id}]:\n'
+                   '\nargs: {args}\n\nkwargs: {kwargs}\n'
+                   '\n{einfo}\n\nstatus:{status}\n').format(task=self.name,
+                                       t_id=task_id,
+                                       args=args,
+                                       kwargs=kwargs,
+                                       einfo=einfo,
+                                       status=status)
+        logger.info(log_message)
 
 
 index = 0
@@ -25,17 +64,18 @@ container_dead = False
 logger = logging.getLogger(__name__)
 
 # Implementing the add function to start a job execution
-@job_app.task(bind=True, acks_late=True, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
+#@job_app.task(bind=True, acks_late=True, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
+@job_app.task(bind=True, acks_late=True, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': 3, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
     global index, container_dead
+    
     worker_id = self.request.hostname.split("@")[1]
     if container_dead:
         time.sleep(15)
         logger.info("Container dead - Worker Id {0}, Job Id {1}".format(worker_id,job["id"]))
         raise Reject("my container is dead", requeue=True)
+    
     index = index + 1
-    job_params = job["params"]
-    job_command = job["command"]
     job_start_time = time.time()
     output = ""
 
@@ -44,41 +84,41 @@ def add(self, exp_id, job_queue_id, job):
         getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"]
     )
     tasks = job["tasks"]
-    try:
-        if isinstance(tasks, list):
-            output = process_list(worker_id, exp_id, job_queue_id, job, job_start_time)
-        else:
-            output = process_array(worker_id, exp_id, job_queue_id, job, job_start_time)
-        response = monitoring.terminate_job(
-            getNodeID(worker_id),
-            exp_id,
-            getServiceName(worker_id),
-            worker_id,
-            job["id"],
-            job_start_time,
-        )
-        if response.lower() == "stop_worker":
-            time.sleep(10)
-            self.update_state(state="SUCCESS")
-            container_dead = True
-            pause_output = pause_container(worker_id)
-            logger.info("Terminate job - Pause command output: {0}".format(pause_output))
-    except subprocess.CalledProcessError as e:
-        response = monitoring.job_failed(
-            getNodeID(worker_id),
-            exp_id,
-            getServiceName(worker_id),
-            worker_id,
-            job["id"],
-            job_start_time,
-        )
-        if response.lower() == "stop_worker":
-            self.update_state(state="REVOKED")
-            container_dead = True
-            pause_output = pause_container(worker_id)
-            logger.info("Failed job - Pause command output: {0}".format(pause_output))
-        # self.update_state(state="RETRY")
-        time.sleep(10) # Changed from 200 to 10
+    #try:
+    if isinstance(tasks, list):
+        output = process_list(worker_id, exp_id, job_queue_id, job, job_start_time)
+    else:
+        output = process_array(worker_id, exp_id, job_queue_id, job, job_start_time)
+    response = monitoring.terminate_job(
+        getNodeID(worker_id),
+        exp_id,
+        getServiceName(worker_id),
+        worker_id,
+        job["id"],
+        job_start_time,
+    )
+    if response.lower() == "stop_worker":
+        time.sleep(10)
+        self.update_state(state="SUCCESS")
+        container_dead = True
+        pause_output = pause_container(worker_id)
+        logger.info("Terminate job - Pause command output: {0}".format(pause_output))
+    # except subprocess.CalledProcessError as e:
+    #     response = monitoring.job_failed(
+    #         getNodeID(worker_id),
+    #         exp_id,
+    #         getServiceName(worker_id),
+    #         worker_id,
+    #         job["id"],
+    #         job_start_time,
+    #     )
+    #     if response.lower() == "stop_worker":
+    #         self.update_state(state="REVOKED")
+    #         container_dead = True
+    #         pause_output = pause_container(worker_id)
+    #         logger.info("Failed job - Pause command output: {0}".format(pause_output))
+    #     # self.update_state(state="RETRY")
+    #     time.sleep(10) # Changed from 200 to 10
 
     return output
 
