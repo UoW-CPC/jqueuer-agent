@@ -28,7 +28,7 @@ class JQueuer_Task(celery.Task):
         # exp_id = args[0]
         # job = args[2]
         # Log message
-        log_message = ('on_failure: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \n retries: {4} \t start_time: {5}'
+        log_message = ('\non_failure: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \n retries: {4} \t start_time: {5}'
                     ).format(task_id, self.jqueuer_exp_id, self.jqueuer_worker_id, self.jqueuer_job["id"], self.request.retries, self.jqueuer_job_start_time)
         logger.info(log_message)
         # send metric
@@ -36,13 +36,13 @@ class JQueuer_Task(celery.Task):
         if response.lower() == "stop_worker":
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
-            logger.info("on_failure - Pause command output: {0}".format(pause_output))
+            logger.info("\non_failure - Pause command output: {0}".format(pause_output))
             time.sleep(10)
 
     def on_retry(self,exc, task_id, args, kwargs, einfo):
         global container_dead
         # Log message
-        log_message = ('on_retry: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \n retries: {4} \t start_time: {5}'
+        log_message = ('\non_retry: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \n retries: {4} \t start_time: {5}'
                     ).format(task_id, self.jqueuer_exp_id, self.jqueuer_worker_id, self.jqueuer_job["id"], self.request.retries, self.jqueuer_job_start_time)
         logger.info(log_message)
         # send metric
@@ -52,12 +52,12 @@ class JQueuer_Task(celery.Task):
             time.sleep(10)
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
-            logger.info("on_retry job - Pause command output: {0}".format(pause_output))
+            logger.info("\non_retry job - Pause command output: {0}".format(pause_output))
 
     def on_success(self,retval, task_id, args, kwargs):
         global container_dead
         # Log message
-        log_message = ('on_retry: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \t start_time: {4}'
+        log_message = ('\non_success: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \t start_time: {4}'
                     ).format(task_id, self.jqueuer_exp_id, self.jqueuer_worker_id, self.jqueuer_job["id"], self.jqueuer_job_start_time)
         logger.info(log_message)
         # send metric
@@ -68,7 +68,7 @@ class JQueuer_Task(celery.Task):
             time.sleep(10)
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
-            logger.info("Terminate job - Pause command output: {0}".format(pause_output))
+            logger.info("\non_success - Pause command output: {0}".format(pause_output))
 
     
 index = 0
