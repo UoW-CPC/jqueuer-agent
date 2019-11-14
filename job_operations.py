@@ -16,48 +16,92 @@ import logging
 
 # What to do when a job fails
 class JQueuer_Task(celery.Task):
+    jqueuer_job_start_time = -1
     def on_failure(self, exc, task_id, args, kwargs, einfo):
+        global container_dead
         log_message = ('on_failure: Task {task}[{t_id}]:\n'
                    '\nargs: {args}\n\nkwargs: {kwargs}\n'
-                   '\n{einfo}\n\nretries:{retries}\n').format(task=self.name,
+                   '\njob_start_time: {st_time}\n\nretries:{retries}\n'
+                   '\n{einfo}\n').format(task=self.name,
                                        t_id=task_id,
                                        args=args,
                                        kwargs=kwargs,
-                                       einfo=einfo,
-                                       retries=self.request.retries)
+                                       st_time=self.jqueuer_job_start_time,
+                                       retries=self.request.retries,
+                                       einfo=einfo
+                                       )
         logger.info(log_message)
+        # send metric
+        worker_id = self.request.hostname.split("@")[1]
+        exp_id = args[0]
+        job = args[2]
+        response = monitoring.job_failed(getNodeID(worker_id),exp_id,getServiceName(worker_id),worker_id,job["id"],self.jqueuer_job_start_time)
+        if response.lower() == "stop_worker":
+            container_dead = True
+            pause_output = pause_container(worker_id)
+            logger.info("Failed job - Pause command output: {0}".format(pause_output))
+            time.sleep(10) # Changed from 200 to 10
 
     def on_retry(self,exc, task_id, args, kwargs, einfo):
+        global container_dead
         log_message = ('on_retry: Task {task}[{t_id}]:\n'
                    '\nargs: {args}\n\nkwargs: {kwargs}\n'
-                   '\n{einfo}\n\nretries:{retries}\n').format(task=self.name,
+                   '\njob_start_time: {st_time}\n\nretries:{retries}\n'
+                   '\n{einfo}\n').format(task=self.name,
                                        t_id=task_id,
                                        args=args,
                                        kwargs=kwargs,
-                                       einfo=einfo,
-                                       retries=self.request.retries)
+                                       st_time=self.jqueuer_job_start_time,
+                                       retries=self.request.retries,
+                                       einfo=einfo)
         logger.info(log_message)
+        
+        # send metric
+        worker_id = self.request.hostname.split("@")[1]
+        exp_id = args[0]
+        job = args[2] 
+        response = monitoring.terminate_retried_job(getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"])
+        if response.lower() == "stop_worker":
+            time.sleep(10)
+            self.update_state(state="SUCCESS")
+            container_dead = True
+            pause_output = pause_container(worker_id)
+            logger.info("Terminate job - Pause command output: {0}".format(pause_output))
 
     def on_success(self,retval, task_id, args, kwargs):
+        global container_dead
         log_message = ('On_Success: Task {task}[{t_id}]:\n'
                    '\nargs: {args}\n\nkwargs: {kwargs}\n'
-                   ).format(task=self.name,
-                                       t_id=task_id,
-                                       args=args,
-                                       kwargs=kwargs)
-        logger.info(log_message)
-    
-    def after_return(self, status, retval, task_id, args, kwargs, einfo): 
-        log_message = ('after_return: Task {task}[{t_id}]:\n'
-                   '\nargs: {args}\n\nkwargs: {kwargs}\n'
-                   '\n{einfo}\n\nstatus:{status}\n').format(task=self.name,
+                   '\njob_start_time: {st_time}\n').format(task=self.name,
                                        t_id=task_id,
                                        args=args,
                                        kwargs=kwargs,
-                                       einfo=einfo,
-                                       status=status)
+                                       st_time=self.jqueuer_job_start_time)
         logger.info(log_message)
 
+        # Send metric
+        worker_id = self.request.hostname.split("@")[1]
+        exp_id = args[0]
+        job = args[2]
+        response = monitoring.terminate_job(getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"], self.jqueuer_job_start_time)
+        if response.lower() == "stop_worker":
+            time.sleep(10)
+            self.update_state(state="SUCCESS")
+            container_dead = True
+            pause_output = pause_container(worker_id)
+            logger.info("Terminate job - Pause command output: {0}".format(pause_output))
+
+    
+    # def after_return(self, status, retval, task_id, args, kwargs, einfo): 
+    #     log_message = ('after_return: Task {task}[{t_id}]:\n'
+    #                '\nargs: {args}\n\nkwargs: {kwargs}\n'
+    #                '\n{einfo}\n\nstatus:{status}\n').format(task=self.name,
+    #                                    t_id=task_id,
+    #                                    args=args,
+    #                                    kwargs=kwargs,
+    #                                    einfo=einfo,
+    #                                    status=status)
+    #     logger.info(log_message)
 
 index = 0
 container_dead = False
@@ -77,6 +121,8 @@ def add(self, exp_id, job_queue_id, job):
     
     index = index + 1
     job_start_time = time.time()
+    self.jqueuer_job_start_time = job_start_time
+    logger.info("Task add - self.jqueuer_job_start_time {0}".format(self.jqueuer_job_start_time))
     output = ""
 
     logger.info("Worker Id: {0}, Job Id: {1}".format(worker_id, job["id"]))
@@ -89,37 +135,7 @@ def add(self, exp_id, job_queue_id, job):
         output = process_list(worker_id, exp_id, job_queue_id, job, job_start_time)
     else:
         output = process_array(worker_id, exp_id, job_queue_id, job, job_start_time)
-    response = monitoring.terminate_job(
-        getNodeID(worker_id),
-        exp_id,
-        getServiceName(worker_id),
-        worker_id,
-        job["id"],
-        job_start_time,
-    )
-    if response.lower() == "stop_worker":
-        time.sleep(10)
-        self.update_state(state="SUCCESS")
-        container_dead = True
-        pause_output = pause_container(worker_id)
-        logger.info("Terminate job - Pause command output: {0}".format(pause_output))
-    # except subprocess.CalledProcessError as e:
-    #     response = monitoring.job_failed(
-    #         getNodeID(worker_id),
-    #         exp_id,
-    #         getServiceName(worker_id),
-    #         worker_id,
-    #         job["id"],
-    #         job_start_time,
-    #     )
-    #     if response.lower() == "stop_worker":
-    #         self.update_state(state="REVOKED")
-    #         container_dead = True
-    #         pause_output = pause_container(worker_id)
-    #         logger.info("Failed job - Pause command output: {0}".format(pause_output))
-    #     # self.update_state(state="RETRY")
-    #     time.sleep(10) # Changed from 200 to 10
-
+    
     return output
 
 
