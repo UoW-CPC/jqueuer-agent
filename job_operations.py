@@ -8,6 +8,7 @@ import os
 
 import celery
 from celery.exceptions import Reject, WorkerTerminate, WorkerShutdown
+from billiard.einfo import ExceptionInfo
 
 import monitoring
 from parameters import jqueuer_job_max_retries
@@ -21,6 +22,10 @@ class JQueuer_Task(celery.Task):
     jqueuer_worker_id = ""
     jqueuer_exp_id = ""
     jqueuer_job = {}
+
+    def on_reject(self,args, kwargs):
+        logger.info("Rejected")
+    
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         global container_dead
         # Data for metric
@@ -37,7 +42,7 @@ class JQueuer_Task(celery.Task):
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
             logger.info("\non_failure - Pause command output: {0}".format(pause_output))
-            time.sleep(10)
+            time.sleep(300) 
 
     def on_retry(self,exc, task_id, args, kwargs, einfo):
         global container_dead
@@ -49,11 +54,11 @@ class JQueuer_Task(celery.Task):
         response = monitoring.terminate_retried_job(getNodeID(self.jqueuer_worker_id), self.jqueuer_exp_id,
                 getServiceName(self.jqueuer_worker_id), self.jqueuer_worker_id, self.jqueuer_job["id"])
         if response.lower() == "stop_worker":
-            time.sleep(10)
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
             logger.info("\non_retry job - Pause command output: {0}".format(pause_output))
-
+            time.sleep(300)
+    
     def on_success(self,retval, task_id, args, kwargs):
         global container_dead
         # Log message
@@ -65,24 +70,29 @@ class JQueuer_Task(celery.Task):
                 getServiceName(self.jqueuer_worker_id), self.jqueuer_worker_id, self.jqueuer_job["id"], 
                 self.jqueuer_job_start_time)
         if response.lower() == "stop_worker":
-            time.sleep(10)
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
             logger.info("\non_success - Pause command output: {0}".format(pause_output))
-
+            time.sleep(300)
     
-index = 0
+    def after_return(self,status, retval, task_id, args, kwargs, einfo):
+        logger.info("\nafter_return - Status: {0} \t einfo: {1}".format(status,einfo))
+        if einfo is not None and isinstance(einfo, ExceptionInfo):
+            e_info = (ExceptionInfo)(einfo)
+            logger.info("Exception-Info - Type: {0} \t Exception: {1}".format(e_info.type,e_info.exception))
+            if isinstance(e_info.exception,Reject):
+                logger.info("Exception type is Reject")
+
 container_dead = False
 logger = logging.getLogger(__name__)
 
 # Implementing the add function to start a job execution
-@job_app.task(bind=True, acks_late=True, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
+@job_app.task(bind=True, acks_late=True, on_reject=reject_handler, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
-    global index, container_dead
+    global container_dead
     
     worker_id = self.request.hostname.split("@")[1]
     if container_dead:
-        time.sleep(15)
         logger.info("Container dead - Worker Id {0}, Job Id {1}".format(worker_id,job["id"]))
         raise Reject("my container is dead", requeue=True)
     # Update class level variables.
@@ -102,6 +112,9 @@ def add(self, exp_id, job_queue_id, job):
     
     return output
 
+def reject_handler(*args, **kwargs):
+    logger.info("reject_handler")
+    time.sleep(300)
 
 # Get Worker ID
 def getNodeID(worker_id):
