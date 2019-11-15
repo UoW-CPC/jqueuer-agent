@@ -89,9 +89,9 @@ container_dead = False
 logger = logging.getLogger(__name__)
 
 @task_rejected.connect
-def on_reject_task(message,exc):
+def on_reject_task(message, exc, **kwargs):
     logger.info("on_reject_task - Message {0}\n Exception: {1}".format(message,exc))
-    
+
 # Implementing the add function to start a job execution
 @job_app.task(bind=True, acks_late=True, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
@@ -99,6 +99,7 @@ def add(self, exp_id, job_queue_id, job):
     
     worker_id = self.request.hostname.split("@")[1]
     if container_dead:
+        time.sleep(15)
         logger.info("Container dead - Worker Id {0}, Job Id {1}".format(worker_id,job["id"]))
         raise Reject("my container is dead", requeue=True)
     # Update class level variables.
