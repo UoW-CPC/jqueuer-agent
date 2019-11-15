@@ -9,6 +9,7 @@ import os
 import celery
 from celery.exceptions import Reject, WorkerTerminate, WorkerShutdown
 from billiard.einfo import ExceptionInfo
+from celery.signals import task_rejected
 
 import monitoring
 from parameters import jqueuer_job_max_retries
@@ -87,6 +88,10 @@ class JQueuer_Task(celery.Task):
 container_dead = False
 logger = logging.getLogger(__name__)
 
+@task_rejected.connect
+def on_reject_task(message,exc):
+    logger.info("on_reject_task - Message {0}\n Exception: {1}".format(message,exc))
+    
 # Implementing the add function to start a job execution
 @job_app.task(bind=True, acks_late=True, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
@@ -95,10 +100,7 @@ def add(self, exp_id, job_queue_id, job):
     worker_id = self.request.hostname.split("@")[1]
     if container_dead:
         logger.info("Container dead - Worker Id {0}, Job Id {1}".format(worker_id,job["id"]))
-        try:
-            raise Reject("my container is dead", requeue=True)
-        except Exception as e:
-            return "rejected"
+        raise Reject("my container is dead", requeue=True)
     # Update class level variables.
     self.jqueuer_job_start_time = time.time()
     self.jqueuer_worker_id = worker_id
