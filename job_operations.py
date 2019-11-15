@@ -23,9 +23,10 @@ class JQueuer_Task(celery.Task):
     jqueuer_exp_id = ""
     jqueuer_job = {}
 
-    def on_reject(self,args, kwargs):
+    def reject_callback(self,args, kwargs):
         logger.info("Rejected")
     
+
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         global container_dead
         # Data for metric
@@ -94,7 +95,10 @@ def add(self, exp_id, job_queue_id, job):
     worker_id = self.request.hostname.split("@")[1]
     if container_dead:
         logger.info("Container dead - Worker Id {0}, Job Id {1}".format(worker_id,job["id"]))
-        raise Reject("my container is dead", requeue=True)
+        try:
+            raise Reject("my container is dead", requeue=True)
+        except Exception as e:
+            return "rejected"
     # Update class level variables.
     self.jqueuer_job_start_time = time.time()
     self.jqueuer_worker_id = worker_id
