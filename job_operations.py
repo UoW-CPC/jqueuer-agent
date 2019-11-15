@@ -87,7 +87,7 @@ container_dead = False
 logger = logging.getLogger(__name__)
 
 # Implementing the add function to start a job execution
-@job_app.task(bind=True, acks_late=True, on_reject=reject_handler, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
+@job_app.task(bind=True, acks_late=True, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
 def add(self, exp_id, job_queue_id, job):
     global container_dead
     
@@ -111,10 +111,6 @@ def add(self, exp_id, job_queue_id, job):
         output = process_array(worker_id, exp_id, job_queue_id, job, self.jqueuer_job_start_time)
     
     return output
-
-def reject_handler(*args, **kwargs):
-    logger.info("reject_handler")
-    time.sleep(300)
 
 # Get Worker ID
 def getNodeID(worker_id):
