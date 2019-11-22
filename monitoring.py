@@ -9,36 +9,32 @@ from parameters import jqueuer_service_url
 
 logger = logging.getLogger(__name__)
 
-def terminate_worker(node_id,experiment_id, service_name):
-    labels = {'metric_type': 'terminate_worker', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
+def run_job(qworker_id, job_id):
+    labels = {'metric_type': 'run_job', 'qworker_id': qworker_id, 'job_id':job_id}
     post_metric(labels)
 
-def run_job(node_id, experiment_id, service_name, qworker_id, job_id):
-    labels = {'metric_type': 'run_job', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id}
+def terminate_retried_job(qworker_id, job_id):
+    labels = {'metric_type': 'terminate_retried_job', 'qworker_id': qworker_id, 'job_id':job_id}
+    return post_metric(labels)
+
+def terminate_job(qworker_id, job_id, start_time):
+    labels = {'metric_type': 'terminate_job', 'qworker_id': qworker_id, 'job_id':job_id, 'start_time': start_time}
+    return post_metric(labels)
+
+def job_failed(qworker_id, job_id, fail_time):
+    labels = {'metric_type': 'job_failed', 'qworker_id': qworker_id, 'job_id':job_id, 'fail_time': fail_time}
+    return post_metric(labels)
+
+def run_task(qworker_id, job_id, task_id):
+    labels = {'metric_type': 'run_task', 'qworker_id': qworker_id, 'job_id':job_id, 'task_id': task_id}
     post_metric(labels)
 
-def terminate_retried_job(node_id, experiment_id, service_name, qworker_id, job_id):
-    labels = {'metric_type': 'terminate_retried_job', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id}
-    return post_metric(labels)
-
-def terminate_job(node_id, experiment_id, service_name, qworker_id, job_id, start_time):
-    labels = {'metric_type': 'terminate_job', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'start_time': start_time}
-    return post_metric(labels)
-
-def job_failed(node_id, experiment_id, service_name, qworker_id, job_id, fail_time):
-    labels = {'metric_type': 'job_failed', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'fail_time': fail_time}
-    return post_metric(labels)
-
-def run_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id):
-    labels = {'metric_type': 'run_task', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id':job_id, 'task_id': task_id}
-    post_metric(labels)
-
-def terminate_task(node_id, experiment_id, service_name, qworker_id, job_id, task_id, start_time):
-    labels = {'metric_type': 'terminate_task', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'start_time': start_time}
+def terminate_task(qworker_id, job_id, task_id, start_time):
+    labels = {'metric_type': 'terminate_task', 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'start_time': start_time}
     post_metric(labels)
     
-def task_failed(node_id, experiment_id, service_name, qworker_id, job_id, task_id, fail_time):
-    labels = {'metric_type': 'task_failed', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name, 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'fail_time': fail_time}
+def task_failed(qworker_id, job_id, task_id, fail_time):
+    labels = {'metric_type': 'task_failed', 'qworker_id': qworker_id, 'job_id': job_id, 'task_id': task_id, 'fail_time': fail_time}
     post_metric(labels)
 
 def post_metric(data):
