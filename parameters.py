@@ -27,7 +27,6 @@ def broker():
     broker = broker + "@" + broker_server + ":" + str(broker_port) + "//"
     return broker
 
-
 # Redis Backend configuration
 backend_protocol = "redis"
 backend_server = os.getenv("REDIS_SERVER", "jqueuer-redis")

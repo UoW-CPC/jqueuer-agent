@@ -42,7 +42,7 @@ job_app = init("")
 if __name__ == "__main__":
     node_id = sys.argv[1]
     container = ast.literal_eval(sys.argv[2])
-    worker_id = node_id + "##" + container["service_name"] + "##" + container["id_long"]
+    worker_id = node_id + "##" + container["service_name"] + "##" + container["id_long"] +  "##" + container["experiment_id"]
 
     job_app = init(container["service_name"])
     job_worker = worker.worker(app=job_app)
@@ -52,5 +52,5 @@ if __name__ == "__main__":
         "loglevel": "INFO",
         "traceback": True,
     }
-    job_worker.run(**job_options)    
+    job_worker.run(**job_options) 
 

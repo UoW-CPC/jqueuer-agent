@@ -9,11 +9,6 @@ from parameters import jqueuer_service_url
 
 logger = logging.getLogger(__name__)
 
-instance_id = uuid.uuid4()
-def add_worker(node_id, experiment_id, service_name):
-    labels = {'metric_type': 'add_worker', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
-    post_metric(labels)
-
 def terminate_worker(node_id,experiment_id, service_name):
     labels = {'metric_type': 'terminate_worker', 'node_id': node_id, 'experiment_id': experiment_id, 'service_name': service_name}
     post_metric(labels)

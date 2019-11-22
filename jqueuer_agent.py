@@ -29,9 +29,7 @@ job_workers = {}
 
 
 def worker(container, node_id):
-    # Add the worker to the monitoring
-    monitoring.add_worker(node_id, container["experiment_id"], container["service_name"])
-
+    
     # Start the app in a new process
     process = subprocess.Popen(
         ["python3", "container_worker.py", str(node_id), str(container)]

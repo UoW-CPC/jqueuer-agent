@@ -39,7 +39,7 @@ class JQueuer_Task(celery.Task):
                     ).format(task_id, self.jqueuer_exp_id, self.jqueuer_worker_id, self.jqueuer_job["id"], self.request.retries, self.jqueuer_job_start_time)
         logger.info(log_message)
         # send metric
-        response = monitoring.job_failed(getNodeID(self.jqueuer_worker_id),self.jqueuer_exp_id,getServiceName(self.jqueuer_worker_id),self.jqueuer_worker_id,self.jqueuer_job["id"],self.jqueuer_job_start_time)
+        response = monitoring.job_failed(getNodeID(self.jqueuer_worker_id),self.jqueuer_exp_id,getServiceName(self.jqueuer_worker_id),getContainerID(self.jqueuer_worker_id),self.jqueuer_job["id"],self.jqueuer_job_start_time)
         if response.lower() == "stop_worker":
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
@@ -54,7 +54,7 @@ class JQueuer_Task(celery.Task):
         logger.info(log_message)
         # send metric
         response = monitoring.terminate_retried_job(getNodeID(self.jqueuer_worker_id), self.jqueuer_exp_id,
-                getServiceName(self.jqueuer_worker_id), self.jqueuer_worker_id, self.jqueuer_job["id"])
+                getServiceName(self.jqueuer_worker_id), getContainerID(self.jqueuer_worker_id), self.jqueuer_job["id"])
         if response.lower() == "stop_worker":
             container_dead = True
             pause_output = pause_container(self.jqueuer_worker_id)
@@ -69,7 +69,7 @@ class JQueuer_Task(celery.Task):
         logger.info(log_message)
         # send metric
         response = monitoring.terminate_job(getNodeID(self.jqueuer_worker_id), self.jqueuer_exp_id, 
-                getServiceName(self.jqueuer_worker_id), self.jqueuer_worker_id, self.jqueuer_job["id"], 
+                getServiceName(self.jqueuer_worker_id), getContainerID(self.jqueuer_worker_id), self.jqueuer_job["id"], 
                 self.jqueuer_job_start_time)
         if response.lower() == "stop_worker":
             container_dead = True
@@ -77,20 +77,9 @@ class JQueuer_Task(celery.Task):
             logger.info("\non_success - Pause command output: {0}".format(pause_output))
             time.sleep(300)
     
-    def after_return(self,status, retval, task_id, args, kwargs, einfo):
-        logger.info("\nafter_return - Status: {0} \t einfo: {1}".format(status,einfo))
-        if einfo is not None and isinstance(einfo, ExceptionInfo):
-            e_info = (ExceptionInfo)(einfo)
-            logger.info("Exception-Info - Type: {0} \t Exception: {1}".format(e_info.type,e_info.exception))
-            if isinstance(e_info.exception,Reject):
-                logger.info("Exception type is Reject")
-
 container_dead = False
 logger = logging.getLogger(__name__)
 
-@task_rejected.connect
-def on_reject_task(message, exc, **kwargs):
-    logger.info("on_reject_task - Message {0}\n Exception: {1}".format(message,exc))
 
 # Implementing the add function to start a job execution
 @job_app.task(bind=True, acks_late=True, autoretry_for=(subprocess.CalledProcessError,), retry_kwargs={'max_retries': jqueuer_job_max_retries, 'countdown': 10}, track_started=True, task_reject_on_worker_lost=True, base=JQueuer_Task)  #
@@ -110,7 +99,7 @@ def add(self, exp_id, job_queue_id, job):
 
     output = ""
     logger.info("Task add - Worker Id: {0} \t Job Id: {1} \t Start time: {2}".format(worker_id, job["id"],self.jqueuer_job_start_time))
-    monitoring.run_job(getNodeID(worker_id), exp_id, getServiceName(worker_id), worker_id, job["id"])
+    monitoring.run_job(getNodeID(worker_id), exp_id, getServiceName(worker_id), getContainerID(worker_id), job["id"])
     tasks = job["tasks"]
     if isinstance(tasks, list):
         output = process_list(worker_id, exp_id, job_queue_id, job, self.jqueuer_job_start_time)
@@ -165,7 +154,7 @@ def process_list(worker_id, exp_id, job_queue_id, job, job_start_time):
             getNodeID(worker_id),
             exp_id,
             getServiceName(worker_id),
-            worker_id,
+            getContainerID(worker_id),
             job["id"],
             task["id"],
         )
@@ -219,7 +208,7 @@ def process_array(worker_id, exp_id, job_queue_id, job, job_start_time):
             getNodeID(worker_id),
             exp_id,
             getServiceName(worker_id),
-            worker_id,
+            getContainerID(worker_id),
             job["id"],
             task_id,
         )
@@ -233,7 +222,7 @@ def process_array(worker_id, exp_id, job_queue_id, job, job_start_time):
             getNodeID(worker_id),
             exp_id,
             getServiceName(worker_id),
-            worker_id,
+            getContainerID(worker_id),
             job["id"],
             task_id,
             task_start_time,
