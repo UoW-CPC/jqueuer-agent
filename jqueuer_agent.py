@@ -8,7 +8,7 @@ import ast
 import os
 import signal
 import logging
-
+import uuid
 import docker
 import redis
 
@@ -152,6 +152,7 @@ if __name__ == "__main__":
     else:
         node_id = "default_id_1"
     # start jqueuer agent process
+    node_id = uuid.uuid4() if node_id == "noname" else node_id
     start(node_id)
 
 

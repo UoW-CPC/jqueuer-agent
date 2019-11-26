@@ -12,7 +12,6 @@ RUN apt update \
 && rm requirements.txt \
 && rm -rf /var/lib/apt/lists/*
 
-RUN HOST_IP=`hostname -I | awk '{print $1}'`
-
-ENV NODE_ID=${HOST_IP}
+#RUN HOST_IP=`hostname -I | awk '{print $1}'`
+ENV NODE_ID=noname
 ENTRYPOINT python3 jqueuer_agent.py $NODE_ID
