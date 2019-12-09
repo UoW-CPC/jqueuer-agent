@@ -12,7 +12,7 @@ import uuid
 import docker
 import redis
 
-from parameters import backend_experiment_db
+from parameters import backend_experiment_db, node_id
 import monitoring
 
 """ Configure logging """
@@ -147,12 +147,11 @@ def start(node_id):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        node_id = sys.argv[1]
+    if node_id == "default_id_1":
+        logger.error("The jqueuer agent node IP must be provided.")
     else:
-        node_id = "default_id_1"
-    # start jqueuer agent process
-    node_id = uuid.uuid4() if node_id == "noname" else node_id
-    start(node_id)
+        # start jqueuer agent process
+        logger.info ("The provided jqueuer agent IP address is: {0}".format(node_id))
+        start(node_id)
 
 

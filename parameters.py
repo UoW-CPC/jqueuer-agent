@@ -15,6 +15,8 @@ broker_port = os.getenv("RABBIT_PORT", 5672)
 # Jqueuer job max retries configuration
 jqueuer_job_max_retries  = int(os.getenv("JQUEUER_JOB_MAX_RETRIES", "3"))
 
+node_id = os.getenv("JQUEUER_HOST_IP", "default_id_1")
+
 # JQueuer Manager Service configuration
 JQUEUER_SERVER = os.getenv("JQUEUER_MANAGER_SERVICE_NAME", "jqueuer-manager")
 JQUEUER_PORT = os.getenv("JQUEUER_MANAGER_SERVICE_PORT", "8081")
