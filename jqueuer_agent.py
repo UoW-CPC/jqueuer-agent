@@ -36,7 +36,6 @@ def worker(container, node_id):
     )
     container["process"] = process
 
-
 # Start the jqueuer_agent process
 def start(node_id):
     # A list of controlled containers on the same node
