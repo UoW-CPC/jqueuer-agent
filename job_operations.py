@@ -33,16 +33,16 @@ class JQueuer_Task(celery.Task):
         exp_id = args[0]
         # job = args[2]
         # Log message
-        log_message = ('\non_failure: Task Id: {0} \n exp_id: {1} \t worker_id: {2} \t job_id: {3} \n retries: {4} \t start_time: {5}'
+        log_message = ('on_failure: \n Task Id => {0} \t exp_id=> {1}\tworker_id=> {2}\tjob_id=> {3}\tretries=> {4}\tstart_time=> {5}'
                     ).format(task_id, exp_id, worker_id, self.jqueuer_job["id"], self.request.retries, self.jqueuer_job_start_time)
         logger.info(log_message)
         # send metric
         response = monitoring.job_failed(worker_id, exp_id, self.jqueuer_job["id"],self.jqueuer_job_start_time)
         if response.lower() == "stop_worker":
             container_dead = True
-            pause_output = pause_container(worker_id)
-            logger.info("\non_failure - Pause command output: {0}".format(pause_output))
-            time.sleep(300) 
+            #pause_output = pause_container(worker_id)
+            #logger.info("\non_failure - Pause command output: {0}".format(pause_output))
+            #time.sleep(300) 
 
     def on_retry(self,exc, task_id, args, kwargs, einfo):
         global container_dead
@@ -57,9 +57,9 @@ class JQueuer_Task(celery.Task):
         response = monitoring.terminate_retried_job(worker_id, exp_id, self.jqueuer_job["id"])
         if response.lower() == "stop_worker":
             container_dead = True
-            pause_output = pause_container(worker_id)
-            logger.info("\non_retry job - Pause command output: {0}".format(pause_output))
-            time.sleep(300)
+            #pause_output = pause_container(worker_id)
+            #logger.info("\non_retry job - Pause command output: {0}".format(pause_output))
+            #time.sleep(300)
     
     def on_success(self,retval, task_id, args, kwargs):
         global container_dead
@@ -73,9 +73,9 @@ class JQueuer_Task(celery.Task):
         response = monitoring.terminate_job(worker_id, exp_id, self.jqueuer_job["id"], self.jqueuer_job_start_time)
         if response.lower() == "stop_worker":
             container_dead = True
-            pause_output = pause_container(worker_id)
-            logger.info("\non_success - Pause command output: {0}".format(pause_output))
-            time.sleep(300)
+            #pause_output = pause_container(worker_id)
+            #logger.info("\non_success - Pause command output: {0}".format(pause_output))
+            #time.sleep(300)
     
 container_dead = False
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ def add(self, exp_id, job_queue_id, job):
     
     worker_id = self.request.hostname.split("@")[1]
     if container_dead:
-        time.sleep(15)
+        time.sleep(30)
         logger.info("Container dead - Worker Id {0}, Job Id {1}".format(worker_id,job["id"]))
         raise Reject("my container is dead", requeue=True)
     # Update class level variables.
