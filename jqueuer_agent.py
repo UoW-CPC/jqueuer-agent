@@ -8,11 +8,11 @@ import ast
 import os
 import signal
 import logging
-
+import uuid
 import docker
 import redis
 
-from parameters import backend_experiment_db
+from parameters import backend_experiment_db, node_id
 import monitoring
 
 """ Configure logging """
@@ -29,15 +29,12 @@ job_workers = {}
 
 
 def worker(container, node_id):
-    # Add the worker to the monitoring
-    monitoring.add_worker(node_id, container["service_name"])
-
+    
     # Start the app in a new process
     process = subprocess.Popen(
         ["python3", "container_worker.py", str(node_id), str(container)]
     )
     container["process"] = process
-
 
 # Start the jqueuer_agent process
 def start(node_id):
@@ -149,9 +146,11 @@ def start(node_id):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        node_id = sys.argv[1]
+    if node_id == "default_id_1":
+        logger.error("The jqueuer agent node IP must be provided.")
     else:
-        node_id = "default_id_1"
-    start(node_id)
+        # start jqueuer agent process
+        logger.info ("The provided jqueuer agent IP address is: {0}".format(node_id))
+        start(node_id)
+
 

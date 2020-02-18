@@ -1,8 +1,6 @@
 import os
 
 import redis
-from datadog import initialize
-from datadog import statsd
 
 # Job Queue Prefix
 JOB_QUEUE_PREFIX = "jqueue_service_"
@@ -14,6 +12,15 @@ broker_password = os.getenv("RABBIT_PASS", "mypass")
 broker_server = os.getenv("RABBIT_SERVER", "jqueuer-rabbit")
 broker_port = os.getenv("RABBIT_PORT", 5672)
 
+# Jqueuer job max retries configuration
+jqueuer_job_max_retries  = int(os.getenv("JQUEUER_JOB_MAX_RETRIES", "3"))
+
+node_id = os.getenv("JQUEUER_HOST_IP", "default_id_1")
+
+# JQueuer Manager Service configuration
+JQUEUER_SERVER = os.getenv("JQUEUER_MANAGER_SERVICE_NAME", "jqueuer-manager")
+JQUEUER_PORT = os.getenv("JQUEUER_MANAGER_SERVICE_PORT", "8081")
+jqueuer_service_url = "http://" + JQUEUER_SERVER + ":" + JQUEUER_PORT + "/experiment/metrics"
 
 def broker():
     broker = broker_protocol + "://" + broker_username
@@ -21,7 +28,6 @@ def broker():
         broker = broker + ":" + broker_password
     broker = broker + "@" + broker_server + ":" + str(broker_port) + "//"
     return broker
-
 
 # Redis Backend configuration
 backend_protocol = "redis"
@@ -54,15 +60,3 @@ def backend(db):
         + str(db)
     )
     return backend
-
-
-# Prometheus exporer configuration
-STATSD_SERVER = os.getenv("STATSD_SERVER", "jqueuer-statsd")
-STATSD_PORT = os.getenv("STATSD_PORT", 9125)
-STATSD_OPTIONS = {
-    "api_key": "jqueuer_api_key",
-    "app_key": "jqueuer_app_key",
-    "statsd_host": STATSD_SERVER,
-    "statsd_port": STATSD_PORT,
-}
-initialize(**STATSD_OPTIONS)
